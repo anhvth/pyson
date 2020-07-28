@@ -55,8 +55,9 @@ def read_json(path):
 
 def multi_thread(fn, array_inputs, max_workers=None, desc="Executing Pipeline", unit=" Samples", verbose=False):
     def _wraper(x):
-        i, input = x
-        return {i: fn(input)}
+        i, args = x
+        print(args, fn(*args))
+        return {i: fn(*args)}
     
     array_inputs = [(i, _) for i, _ in enumerate(array_inputs)]
     if verbose:
@@ -74,6 +75,27 @@ def multi_thread(fn, array_inputs, max_workers=None, desc="Executing Pipeline", 
     if verbose:
         print('Finished')
     outputs = list(outputs.values())
+    return outputs
+
+
+
+def multi_apply(fn, *args, **kwargs):
+    # args is tuple, len(args) = num func's input
+    num_func_input = len(args)
+    num_input = len(args[0])
+    # _input = 
+    inputs = [[None for _ in range(num_func_input)] for _ in range(num_input)]
+    for i in range(num_input):
+        for j in range(num_func_input):
+            inputs[i][j] = args[j][i]
+    results_list = multi_thread(fn, inputs)
+    num_output = len(results_list[0])
+
+    outputs = [[None for _ in range(num_input)] for _ in range(num_output)]
+    # import pdb; pdb.set_trace()
+    for i in range(num_input):
+        for j in range(num_output):
+            outputs[j][i] = results_list[i][j]
     return outputs
     
  
@@ -237,10 +259,22 @@ def load_ssh(link, ssh_username, ssh_password, server_address, web_port=8000):
     return ckpt
 
 if __name__ == '__main__':
-    path = 'sample_image/1.png'
-    image = read_img(path)
-    print('Test show from path')
-    show(path)
-    print('Test show from np image')
-    show(image)
+    inputs_1 = [i for i in range(10)]
+    inputs_2 = [i*2 for i in range(10)]
+    def fn(x1, x2):
+        return x1+x2, x1-x2
+    my_result = multi_apply(fn, inputs_1, inputs_2)
+    mm_result = mm_multi_apply(fn, inputs_1, inputs_2)
+    import pdb; pdb.set_trace()
+    for aa,bb in zip(my_result, mm_result):
+        for a, b in zip(aa,bb):
+            assert a == b, f'{a}, {b} differ'
+    print('Success')
+    # import pdb; pdb.set_trace()
+    # path = 'sample_image/1.png'
+    # image = read_img(path)
+    # print('Test show from path')
+    # show(path)
+    # print('Test show from np image')
+    # show(image)
 
