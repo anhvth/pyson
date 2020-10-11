@@ -52,12 +52,35 @@ def read_json(path):
     return data
 
 
+def swap_list(lst):
+    assert isinstance(lst, (list, tuple))
+    assert isinstance(lst[0], (list, tuple))
+    len_list = len(lst)
+    len_elem = len(lst[0])
+    out = [[None for _ in range(len_list)] for _ in range(len_elem)]
+    for i in range(len_list):
+        for j in range(len_elem):
+            out[j][i] = lst[i][j]
+    return out
 
-def multi_thread(fn, array_inputs, max_workers=None, desc="Executing Pipeline", unit=" Samples", verbose=False):
+def multi_apply(fn, *args, **kwargs):
+    inputs = list(args)
+    inputs = swap_list(inputs)
+    result = multi_thread(fn, inputs, **kwargs)
+    result = swap_list(result)
+    return tuple(result)
+
+
+
+def multi_thread(fn, array_inputs, max_workers=None, desc="Executing Pipeline", unit=" Samples", verbose=False, **kwargs):
     def _wraper(x):
         i, args = x
+<<<<<<< HEAD
         print(args, fn(*args))
         return {i: fn(*args)}
+=======
+        return {i: fn(*args, **kwargs)}
+>>>>>>> dca106e066acaa85f9ec86c44ff91bd785c4ea7b
     
     array_inputs = [(i, _) for i, _ in enumerate(array_inputs)]
     if verbose:
@@ -258,6 +281,28 @@ def load_ssh(link, ssh_username, ssh_password, server_address, web_port=8000):
         ckpt = model_zoo.load_url(link)
     return ckpt
 
+
+def mm_multi_apply(func, *args, **kwargs):
+    """Apply function to a list of arguments
+
+    Note:
+        This function applies the ``func`` to multiple inputs and
+            map the multiple outputs of the ``func`` into different
+            list. Each list contains the same type of outputs corresponding
+            to different inputs.
+
+    Args:
+        func (Function): A function that will be applied to a list of
+            arguments
+
+    Returns:
+        tuple(list): A tuple containing multiple list, each list contains
+            a kind of returned results by the function
+    """
+    pfunc = partial(func, **kwargs) if kwargs else func
+    map_results = map(pfunc, *args)
+    return tuple(map(list, zip(*map_results))) 
+
 if __name__ == '__main__':
     inputs_1 = [i for i in range(10)]
     inputs_2 = [i*2 for i in range(10)]
@@ -276,5 +321,10 @@ if __name__ == '__main__':
     # print('Test show from path')
     # show(path)
     # print('Test show from np image')
-    # show(image)
+    i = list(range(10))
+    j = list(range(0, 20, 2))
+    def fn(a,b):
+        return a+b, a-b
+    result_1 = multi_apply(fn, i, j)
+    reuslt_2 = mm_multi_apply(fn, i, j)
 
