@@ -63,24 +63,11 @@ def swap_list(lst):
             out[j][i] = lst[i][j]
     return out
 
-def multi_apply(fn, *args, **kwargs):
-    inputs = list(args)
-    inputs = swap_list(inputs)
-    result = multi_thread(fn, inputs, **kwargs)
-    result = swap_list(result)
-    return tuple(result)
 
-
-
-def multi_thread(fn, array_inputs, max_workers=None, desc="Executing Pipeline", unit=" Samples", verbose=False, **kwargs):
+def multi_thread(fn, array_inputs, max_workers=None, desc="Executing Pipeline", unit=" Samples", verbose=False):
     def _wraper(x):
-        i, args = x
-<<<<<<< HEAD
-        print(args, fn(*args))
-        return {i: fn(*args)}
-=======
-        return {i: fn(*args, **kwargs)}
->>>>>>> dca106e066acaa85f9ec86c44ff91bd785c4ea7b
+        i, input = x
+        return {i: fn(input)}
     
     array_inputs = [(i, _) for i, _ in enumerate(array_inputs)]
     if verbose:
@@ -98,27 +85,6 @@ def multi_thread(fn, array_inputs, max_workers=None, desc="Executing Pipeline", 
     if verbose:
         print('Finished')
     outputs = list(outputs.values())
-    return outputs
-
-
-
-def multi_apply(fn, *args, **kwargs):
-    # args is tuple, len(args) = num func's input
-    num_func_input = len(args)
-    num_input = len(args[0])
-    # _input = 
-    inputs = [[None for _ in range(num_func_input)] for _ in range(num_input)]
-    for i in range(num_input):
-        for j in range(num_func_input):
-            inputs[i][j] = args[j][i]
-    results_list = multi_thread(fn, inputs)
-    num_output = len(results_list[0])
-
-    outputs = [[None for _ in range(num_input)] for _ in range(num_output)]
-    # import pdb; pdb.set_trace()
-    for i in range(num_input):
-        for j in range(num_output):
-            outputs[j][i] = results_list[i][j]
     return outputs
     
  
